@@ -6,14 +6,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from pydantic import ValidationError
 from typing import List, Dict, Any
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import our validation models
-from validation import OpenWeatherResponse, AQICNResponse, CombinedIngestionModel
+from validation import WeatherAPIResponse, AQICNResponse, CombinedIngestionModel
 
 # --- Configuration ---
-# In a real app, these would come from env variables or a config file
-OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY", "YOUR_API_KEY")
-AQICN_API_KEY = os.environ.get("AQICN_API_KEY", "YOUR_API_KEY")
+WEATHERAPI_API_KEY = os.environ.get("WEATHERAPI_API_KEY")
+AQICN_API_KEY = os.environ.get("AQICN_API_KEY")
 
 CITIES = {
     "Delhi": {"lat": 28.7041, "lon": 77.1025},
@@ -22,45 +25,39 @@ CITIES = {
 }
 
 # Phase 1: Write to local filesystem (simulating S3)
-# The Airflow DAG will look for files here
 RAW_DATA_PATH = Path(os.environ.get("RAW_DATA_PATH", "./data/raw"))
 RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
 
 # --- API Clients ---
 
-def get_openweather_data(city: str, lat: float, lon: float) -> dict:
-    """Returns dummy weather data."""
-    return {
-        "coord": {"lon": lon, "lat": lat, "city": city},
-        "weather": [{"id": 800, "main": "Clear", "description": "clear sky", "icon": "01d"}],
-        "base": "stations",
-        "main": {"temp": 25, "feels_like": 26, "temp_min": 24, "temp_max": 26, "pressure": 1012, "humidity": 50},
-        "visibility": 10000,
-        "wind": {"speed": 1.5, "deg": 360},
-        "clouds": {"all": 0},
-        "dt": int(time.time()),
-        "sys": {"type": 1, "id": 9027, "country": "IN", "sunrise": 1609459642, "sunset": 1609500000},
-        "timezone": 19800,
-        "id": 1273294,
-        "name": city,
-        "cod": 200
+def get_weatherapi_data(city: str, lat: float, lon: float) -> dict:
+    """Fetches weather data from WeatherAPI.com."""
+    url = "http://api.weatherapi.com/v1/current.json"
+    params = {
+        "key": WEATHERAPI_API_KEY,
+        "q": f"{lat},{lon}"
     }
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        print(f"Error fetching WeatherAPI data for {city}: {e}")
+        return None
 
 def get_aqicn_data(city: str, lat: float, lon: float) -> dict:
-    """Returns dummy air quality data."""
-    return {
-        "status": "ok",
-        "data": {
-            "aqi": 150,
-            "idx": 12345,
-            "attributions": [],
-            "city": {"geo": [lat, lon], "name": city, "url": ""},
-            "dominentpol": "pm25",
-            "iaqi": {},
-            "time": {"s": "2025-11-02 10:00:00", "tz": "+05:30", "v": int(time.time())},
-            "forecast": {}
-        }
+    """Fetches air quality data from AQICN."""
+    url = f"https://api.waqi.info/feed/geo:{lat};{lon}/"
+    params = {
+        "token": AQICN_API_KEY
     }
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        print(f"Error fetching AQICN data for {city}: {e}")
+        return None
 
 # --- Normalization & Validation ---
 
@@ -71,31 +68,31 @@ def normalize_data(raw_weather: dict, raw_aqi: dict) -> dict:
     """
     try:
         # 1. Validate raw responses
-        weather = OpenWeatherResponse(**raw_weather)
+        weather = WeatherAPIResponse(**raw_weather)
         aqi = AQICNResponse(**raw_aqi)
 
         # 2. Combine and normalize into our target schema
         combined_data = CombinedIngestionModel(
-            source_api="OpenWeather+AQICN",
-            city=weather.name,
-            lat=weather.coord.lat,
-            lon=weather.coord.lon,
-            temperature_celsius=weather.main.temp,
-            feels_like_celsius=weather.main.feels_like,
-            pressure_hpa=weather.main.pressure,
-            humidity_percent=weather.main.humidity,
-            wind_speed_ms=weather.wind.speed,
-            wind_direction_deg=weather.wind.deg,
+            source_api="WeatherAPI+AQICN",
+            city=weather.location.name,
+            lat=weather.location.lat,
+            lon=weather.location.lon,
+            temperature_celsius=weather.current.temp_c,
+            feels_like_celsius=weather.current.feelslike_c,
+            pressure_hpa=weather.current.pressure_mb,
+            humidity_percent=weather.current.humidity,
+            wind_speed_ms=round(weather.current.wind_kph * 1000 / 3600, 2), # Convert kph to m/s
+            wind_direction_deg=weather.current.wind_degree,
             aqi=aqi.data.aqi,
             dominant_pollutant=aqi.data.dominentpol,
-            api_timestamp=datetime.fromtimestamp(weather.dt, tz=timezone.utc)
+            api_timestamp=datetime.fromtimestamp(weather.current.last_updated_epoch, tz=timezone.utc)
         )
         
         # Return as a dictionary, ready for JSON serialization
         return combined_data.model_dump(mode="json")
 
     except ValidationError as e:
-        print(f"Data validation error for {raw_weather.get('name', 'Unknown')}: {e}")
+        print(f"Data validation error for {raw_weather.get('location', {}).get('name', 'Unknown')}: {e}")
         return None
     except Exception as e:
         print(f"Error normalizing data: {e}")
@@ -114,7 +111,7 @@ def run_ingestion():
 
     for city, coords in CITIES.items():
         print(f"Fetching data for {city}...")
-        raw_weather = get_openweather_data(city, **coords)
+        raw_weather = get_weatherapi_data(city, **coords)
         raw_aqi = get_aqicn_data(city, **coords)
 
         if raw_weather and raw_aqi:
@@ -129,7 +126,6 @@ def run_ingestion():
         return
 
     # Phase 1: Save to a timestamped JSON file in the raw directory
-    # This simulates writing to s3://.../raw/YYYY-MM-DD/HH-MM-SS.json
     run_timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
     output_filename = f"ingestion_run_{run_timestamp}.json"
     output_path = RAW_DATA_PATH / output_filename
@@ -142,11 +138,4 @@ def run_ingestion():
         print(f"Error writing raw data to file: {e}")
 
 if __name__ == "__main__":
-    # This allows us to run the script manually for testing
-    if "YOUR_API_KEY" in [OPENWEATHER_API_KEY, AQICN_API_KEY]:
-        print("="*50)
-        print("WARNING: API keys not set.")
-        print("Please set OPENWEATHER_API_KEY and AQICN_API_KEY env variables.")
-        print("="*50)
-    
     run_ingestion()

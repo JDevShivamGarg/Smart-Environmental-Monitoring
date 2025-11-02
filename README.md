@@ -7,7 +7,7 @@ This project is a comprehensive, real-time environmental monitoring system that 
 ```mermaid
 flowchart LR
   subgraph Sources
-    A[OpenWeatherMap] -->|REST| Ingest
+    A[WeatherAPI.com] -->|REST| Ingest
     B[AQICN] -->|REST| Ingest
     C[Open-Meteo] -->|REST| Ingest
   end
@@ -51,13 +51,22 @@ This first phase focuses on getting data from the APIs to a curated dataset, rea
 
 ### How to Run Phase 1
 
-1.  **Install Dependencies:**
+1.  **Set up Environment Variables:**
+
+    Create a `.env` file in the root of the project and add your API keys:
+
+    ```
+    WEATHERAPI_API_KEY=your_weatherapi_key
+    AQICN_API_KEY=your_aqicn_key
+    ```
+
+2.  **Install Dependencies:**
 
     ```bash
     pip install -r requirements.txt
     ```
 
-2.  **Run the ETL Pipeline:**
+3.  **Run the ETL Pipeline:**
 
     The following commands will run the entire ETL pipeline:
 
@@ -75,6 +84,7 @@ This first phase focuses on getting data from the APIs to a curated dataset, rea
 
 ```
 env-monitoring/
+├─ .env
 ├─ data/
 │  ├─ raw/
 │  └─ curated/
