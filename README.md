@@ -13,36 +13,36 @@ flowchart LR
   end
 
   subgraph Ingestion
-    Ingest[Ingest Service (Python)] --> Kafka[Kafka Topic(s)]
+    Ingest[Ingest Service - Python] --> Kafka[Kafka Topics]
   end
 
   subgraph Processing
     Kafka --> StreamProc[Spark Structured Streaming]
-    StreamProc --> DataLake[(S3 raw/curated)]
-    StreamProc --> DB[(Postgres / TimescaleDB)]
+    StreamProc --> DataLake[S3 raw/curated]
+    StreamProc --> DB[Postgres / TimescaleDB]
   end
 
   subgraph Analytics
-    DB --> FeatureStore[Feature Store (MLflow or Feast)]
-    FeatureStore --> ModelTrain[Model Training (Airflow)]
+    DB --> FeatureStore[Feature Store - MLflow or Feast]
+    FeatureStore --> ModelTrain[Model Training - Airflow]
     ModelTrain --> ModelRegistry[MLflow Model Registry]
-    StreamProc --> RealTimeModels[Serving (FastAPI + Redis cache)]
+    StreamProc --> RealTimeModels[Serving - FastAPI + Redis cache]
   end
 
   subgraph Presentation
     DB --> Dashboard[Streamlit / Plotly Dash / React]
     RealTimeModels --> Dashboard
-    AlertsService[Alerts (SMTP / Twilio)] -->|Notifications| Users[Users]
+    AlertsService[Alerts - SMTP / Twilio] -->|Notifications| Users[Users]
     Dashboard --> Users
   end
 
   subgraph Orchestration
-    Airflow[Airflow] --> Ingest
+    Airflow --> Ingest
     Airflow --> StreamProc
     Airflow --> ModelTrain
   end
 
-  DataLake --> Notebook[Exploration Notebooks (Jupyter)]
+  DataLake --> Notebook[Exploration Notebooks - Jupyter]
 ```
 
 ## Phase 1: Core ETL & Analytics MVP (Batch-based)
