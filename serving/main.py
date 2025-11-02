@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
+from scipy.stats import iqr
 
 # Load environment variables from .env file
 load_dotenv()
@@ -229,6 +230,22 @@ def get_data():
         # Since the index is a datetime object, we need to reset it to be able to serialize to JSON
         df = df.reset_index()
         return df.to_dict(orient="records")
+    except FileNotFoundError:
+        return {"error": "Curated data file not found. ETL job may not have run yet."}
+
+@app.get("/api/stats")
+def get_stats():
+    """Calculates and returns descriptive statistics and correlation matrix."""
+    try:
+        df = pd.read_parquet(CURATED_DATA_PATH / "environmental_data.parquet")
+        numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+        
+        stats = {
+            'descriptive_stats': df[numeric_cols].describe().to_dict(),
+            'correlation_matrix': df[numeric_cols].corr().to_dict()
+        }
+        
+        return stats
     except FileNotFoundError:
         return {"error": "Curated data file not found. ETL job may not have run yet."}
 

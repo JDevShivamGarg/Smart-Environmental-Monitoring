@@ -8,6 +8,7 @@ const Header = () => {
         <div className="space-x-4">
           <Link to="/" className="hover:text-gray-300">Home</Link>
           <Link to="/dashboard" className="hover:text-gray-300">Dashboard</Link>
+          <Link to="/statistics" className="hover:text-gray-300">Statistics</Link>
         </div>
       </nav>
     </header>
