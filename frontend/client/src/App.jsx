@@ -5,7 +5,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchData = () => {
     fetch('http://localhost:8000/api/data')
       .then(response => {
         if (!response.ok) {
@@ -21,6 +21,13 @@ function App() {
         setError(error.message);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchData(); // Fetch data initially
+    const intervalId = setInterval(fetchData, 10000); // Fetch data every 10 seconds
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
   }, []);
 
   if (loading) {
