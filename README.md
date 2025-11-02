@@ -1,6 +1,15 @@
 # Smart Environmental Monitoring System
 
-This project is a comprehensive, real-time environmental monitoring system that ingests data from various sources, processes it in a scalable pipeline, and provides analytics and visualizations.
+This project is a comprehensive, real-time environmental monitoring system that ingests data from various sources, processes it in a scalable pipeline, and provides a modern, interactive web interface for data visualization and analysis.
+
+## Features
+
+*   **Automated ETL Pipeline:** Data is automatically fetched, cleaned, and processed in the background.
+*   **Interactive Dashboard:** A user-friendly dashboard to visualize and interact with the data.
+*   **Dynamic Charts:** Charts that switch between bar and line graphs for better data visualization.
+*   **City Filtering:** Filter the data by city to focus on a specific location.
+*   **Table Sorting:** Sort the data by any numeric column.
+*   **Live Clock & Sync Timer:** Keep track of the current time and the next data sync.
 
 ## Architecture
 
@@ -9,47 +18,19 @@ flowchart LR
   subgraph Sources
     A[WeatherAPI.com] -->|REST| Ingest
     B[AQICN] -->|REST| Ingest
-    C[Open-Meteo] -->|REST| Ingest
   end
 
-  subgraph Ingestion
-    Ingest[Ingest Service - Python] --> Kafka[Kafka Topics]
+  subgraph Backend
+    Ingest[ETL Service] --> DataLake[(Parquet File)]
+    DataLake --> API[FastAPI]
   end
 
-  subgraph Processing
-    Kafka --> StreamProc[Spark Structured Streaming]
-    StreamProc --> DataLake[S3 raw/curated]
-    StreamProc --> DB[Postgres / TimescaleDB]
+  subgraph Frontend
+    API --> Dashboard[React App]
   end
-
-  subgraph Analytics
-    DB --> FeatureStore[Feature Store - MLflow or Feast]
-    FeatureStore --> ModelTrain[Model Training - Airflow]
-    ModelTrain --> ModelRegistry[MLflow Model Registry]
-    StreamProc --> RealTimeModels[Serving - FastAPI + Redis cache]
-  end
-
-  subgraph Presentation
-    DB --> Dashboard[Streamlit / Plotly Dash / React]
-    RealTimeModels --> Dashboard
-    AlertsService[Alerts - SMTP / Twilio] -->|Notifications| Users[Users]
-    Dashboard --> Users
-  end
-
-  subgraph Orchestration
-    Airflow --> Ingest
-    Airflow --> StreamProc
-    Airflow --> ModelTrain
-  end
-
-  DataLake --> Notebook[Exploration Notebooks - Jupyter]
 ```
 
-## Phase 1: Core ETL & Analytics MVP (Batch-based)
-
-This first phase focuses on getting data from the APIs to a curated dataset, ready for analysis.
-
-### How to Run Phase 1
+## How to Run the Application
 
 1.  **Set up Environment Variables:**
 
@@ -62,23 +43,26 @@ This first phase focuses on getting data from the APIs to a curated dataset, rea
 
 2.  **Install Dependencies:**
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+    *   **Backend:** `pip install -r serving/requirements.txt`
+    *   **Frontend:** `cd frontend/client && npm install`
 
-3.  **Run the ETL Pipeline:**
+3.  **Run the Application:**
 
-    The following commands will run the entire ETL pipeline:
+    *   **Start the Backend:**
+        ```bash
+        # In the 'serving' directory
+        python -m uvicorn main:app --host 0.0.0.0 --port 8000
+        ```
 
-    *   **Ingestion:** Fetches data from the APIs and saves it to `data/raw`.
-    *   **Transformation:** Processes the raw data and saves it to `data/curated/environmental_data.parquet`.
-    *   **Analysis:** Reads the curated data and prints a summary.
+    *   **Start the Frontend:**
+        ```bash
+        # In the 'frontend/client' directory
+        npm run dev
+        ```
 
-    ```bash
-    python app.py
-    python batch_transform.py
-    python analyze.py
-    ```
+4.  **Explore:**
+
+    Open your browser to `http://localhost:5173`.
 
 ## File Layout
 
@@ -88,12 +72,23 @@ env-monitoring/
 ├─ data/
 │  ├─ raw/
 │  └─ curated/
-├─ app.py
-├─ batch_transform.py
-├─ phase_1_etl_dag.py
+├─ frontend/
+│  └─ client/
+│     ├─ public/
+│     ├─ src/
+│     │  ├─ components/
+│     │  ├─ context/
+│     │  ├─ pages/
+│     │  ├─ App.jsx
+│     │  ├─ index.css
+│     │  └─ main.jsx
+│     ├─ package.json
+│     └─ vite.config.js
+├─ serving/
+│  ├─ main.py
+│  └─ requirements.txt
 ├─ validation.py
-├─ analyze.py
-├─ requirements.txt
+├─ CHECKPOINT.md
 ├─ .gitignore
 └─ README.md
 ```

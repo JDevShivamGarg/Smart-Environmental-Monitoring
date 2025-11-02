@@ -26,15 +26,40 @@ WEATHERAPI_API_KEY = os.environ.get("WEATHERAPI_API_KEY")
 AQICN_API_KEY = os.environ.get("AQICN_API_KEY")
 
 CITIES = {
-    "Delhi": {"lat": 28.7041, "lon": 77.1025},
-    "Mumbai": {"lat": 19.0760, "lon": 72.8777},
-    "Bengaluru": {"lat": 12.9716, "lon": 77.5946},
-    "Kolkata": {"lat": 22.5726, "lon": 88.3639},
-    "Chennai": {"lat": 13.0827, "lon": 80.2707},
-    "Hyderabad": {"lat": 17.3850, "lon": 78.4867},
-    "Pune": {"lat": 18.5204, "lon": 73.8567},
-    "Ahmedabad": {"lat": 23.0225, "lon": 72.5714},
-    "Jaipur": {"lat": 26.9124, "lon": 75.7873}
+    "Amaravati": {"lat": 16.5667, "lon": 80.3667}, # Andhra Pradesh
+    "Itanagar": {"lat": 27.0869, "lon": 93.6099}, # Arunachal Pradesh
+    "Dispur": {"lat": 26.1356, "lon": 91.8007}, # Assam
+    "Patna": {"lat": 25.6154, "lon": 85.1010}, # Bihar
+    "Raipur": {"lat": 21.2444, "lon": 81.6306}, # Chhattisgarh
+    "Panaji": {"lat": 15.4989, "lon": 73.8278}, # Goa
+    "Gandhinagar": {"lat": 23.2148, "lon": 72.6498}, # Gujarat
+    "Chandigarh": {"lat": 30.7500, "lon": 76.7800}, # Haryana, Punjab
+    "Shimla": {"lat": 31.1033, "lon": 77.1722}, # Himachal Pradesh
+    "Ranchi": {"lat": 23.3432, "lon": 85.3094}, # Jharkhand
+    "Bengaluru": {"lat": 12.9700, "lon": 77.5600}, # Karnataka
+    "Thiruvananthapuram": {"lat": 8.5241, "lon": 76.9366}, # Kerala
+    "Bhopal": {"lat": 23.2599, "lon": 77.4126}, # Madhya Pradesh
+    "Mumbai": {"lat": 19.0761, "lon": 72.8774}, # Maharashtra
+    "Imphal": {"lat": 24.8074, "lon": 93.9384}, # Manipur
+    "Shillong": {"lat": 25.5822, "lon": 91.8944}, # Meghalaya
+    "Aizawl": {"lat": 23.8000, "lon": 92.9000}, # Mizoram
+    "Kohima": {"lat": 25.6700, "lon": 94.1200}, # Nagaland
+    "Bhubaneswar": {"lat": 20.2700, "lon": 85.8400}, # Odisha
+    "Jaipur": {"lat": 26.9075, "lon": 75.7396}, # Rajasthan
+    "Gangtok": {"lat": 27.3170, "lon": 88.6000}, # Sikkim
+    "Chennai": {"lat": 13.0825, "lon": 80.2750}, # Tamil Nadu
+    "Hyderabad": {"lat": 17.3617, "lon": 78.4747}, # Telangana
+    "Agartala": {"lat": 23.8314, "lon": 91.2869}, # Tripura
+    "Lucknow": {"lat": 26.8500, "lon": 80.9500}, # Uttar Pradesh
+    "Dehradun": {"lat": 30.3450, "lon": 78.0290}, # Uttarakhand
+    "Kolkata": {"lat": 22.5726, "lon": 88.3639}, # West Bengal
+    "Port Blair": {"lat": 11.6683, "lon": 92.7378}, # Andaman and Nicobar Islands
+    "Daman": {"lat": 20.4200, "lon": 72.8500}, # Dadra and Nagar Haveli and Daman and Diu
+    "New Delhi": {"lat": 28.6791, "lon": 77.0697}, # Delhi
+    "Srinagar": {"lat": 34.0900, "lon": 74.7900}, # Jammu and Kashmir
+    "Kavaratti": {"lat": 10.5700, "lon": 72.6400}, # Lakshadweep
+    "Leh": {"lat": 34.1642, "lon": 77.5847}, # Ladakh
+    "Puducherry": {"lat": 11.9110, "lon": 79.8130} # Puducherry
 }
 
 RAW_DATA_PATH = Path("../data/raw")
@@ -75,17 +100,17 @@ def get_aqicn_data(city: str, lat: float, lon: float) -> dict:
         print(f"Error fetching AQICN data for {city}: {e}")
         return None
 
-def normalize_data(raw_weather: dict, raw_aqi: dict) -> dict:
+def normalize_data(city_name: str, raw_weather: dict, raw_aqi: dict) -> dict:
     try:
         weather = WeatherAPIResponse(**raw_weather)
         aqi = AQICNResponse(**raw_aqi)
         combined_data = CombinedIngestionModel(
             source_api="WeatherAPI+AQICN",
-            city=weather.location.name,
-            lat=weather.location.lat,
-            lon=weather.location.lon,
-            temperature_celsius=weather.current.temp_c,
-            feels_like_celsius=weather.current.feelslike_c,
+            city=city_name,
+            lat=round(weather.location.lat, 2),
+            lon=round(weather.location.lon, 2),
+            temperature_celsius=round(weather.current.temp_c, 2),
+            feels_like_celsius=round(weather.current.feelslike_c, 2),
             pressure_hpa=weather.current.pressure_mb,
             humidity_percent=weather.current.humidity,
             wind_speed_ms=round(weather.current.wind_kph * 1000 / 3600, 2),
@@ -110,7 +135,7 @@ def run_ingestion():
         raw_weather = get_weatherapi_data(city, **coords)
         raw_aqi = get_aqicn_data(city, **coords)
         if raw_weather and raw_aqi:
-            normalized_data = normalize_data(raw_weather, raw_aqi)
+            normalized_data = normalize_data(city, raw_weather, raw_aqi)
             if normalized_data:
                 all_data.append(normalized_data)
         time.sleep(1)
@@ -170,13 +195,8 @@ def save_curated_data(df: pd.DataFrame):
     output_path = CURATED_DATA_PATH / "environmental_data.parquet"
     CURATED_DATA_PATH.mkdir(parents=True, exist_ok=True)
     try:
-        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-            existing_df = pd.read_parquet(output_path)
-            combined_df = pd.concat([existing_df, df])
-            combined_df.to_parquet(output_path, engine='pyarrow', index=True)
-        else:
-            df.to_parquet(output_path, engine='pyarrow', index=True)
-        print(f"Successfully saved/appended curated data to {output_path}")
+        df.to_parquet(output_path, engine='pyarrow', index=True)
+        print(f"Successfully saved curated data to {output_path}")
     except Exception as e:
         print(f"Error saving curated data: {e}")
 
