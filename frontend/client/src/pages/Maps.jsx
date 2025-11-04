@@ -267,7 +267,7 @@ const Maps = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 rounded" style={{ backgroundColor: '#FF0000' }}></div>
-                    <span className="text-sm">Very Hot (>35°C)</span>
+                    <span className="text-sm">Very Hot (&gt;35°C)</span>
                   </div>
                 </>
               )}
@@ -287,7 +287,7 @@ const Maps = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 rounded" style={{ backgroundColor: '#0000FF' }}></div>
-                    <span className="text-sm">Very Humid (>80%)</span>
+                    <span className="text-sm">Very Humid (&gt;80%)</span>
                   </div>
                 </>
               )}
@@ -307,7 +307,7 @@ const Maps = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 rounded" style={{ backgroundColor: '#FF0000' }}></div>
-                    <span className="text-sm">Very Strong (>25 km/h)</span>
+                    <span className="text-sm">Very Strong (&gt;25 km/h)</span>
                   </div>
                 </>
               )}

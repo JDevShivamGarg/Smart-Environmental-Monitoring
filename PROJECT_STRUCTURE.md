@@ -14,19 +14,19 @@ Smart-Environmental-Monitoring/
 │   └── client/                  # React application
 │       ├── src/
 │       │   ├── components/     # Reusable React components
-│       │   │   ├── Chart.jsx
-│       │   │   ├── Clock.jsx
-│       │   │   ├── Data-table.jsx
-│       │   │   ├── Header.jsx
-│       │   │   └── SyncTimer.jsx
+│       │   │   ├── Chart.jsx          # Dynamic chart component
+│       │   │   ├── Clock.jsx          # Live clock display
+│       │   │   ├── Data-table.jsx    # Sortable data table
+│       │   │   ├── Header.jsx         # Navigation header with icons
+│       │   │   └── SyncTimer.jsx      # Data sync countdown timer
 │       │   ├── pages/          # Application pages
-│       │   │   ├── Home.jsx
-│       │   │   ├── Dashboard.jsx
-│       │   │   ├── Statistics.jsx
-│       │   │   ├── Maps.jsx
-│       │   │   ├── Alerts.jsx
-│       │   │   ├── Settings.jsx
-│       │   │   └── About.jsx
+│       │   │   ├── Home.jsx           # Landing page with features
+│       │   │   ├── Dashboard.jsx      # Main data dashboard
+│       │   │   ├── Statistics.jsx     # Statistical analysis page
+│       │   │   ├── Maps.jsx           # Geographic visualization
+│       │   │   ├── Alerts.jsx         # Environmental alerts
+│       │   │   ├── Settings.jsx       # Application settings
+│       │   │   └── About.jsx          # Project information
 │       │   ├── App.jsx         # Main application component
 │       │   ├── main.jsx        # Application entry point
 │       │   └── index.css       # Global styles
@@ -34,6 +34,7 @@ Smart-Environmental-Monitoring/
 │       ├── package.json        # Node.js dependencies
 │       ├── package-lock.json   # Locked dependency versions
 │       ├── vite.config.js      # Vite build configuration
+│       ├── postcss.config.js   # PostCSS configuration for Tailwind
 │       ├── tailwind.config.js  # Tailwind CSS configuration
 │       ├── nginx.conf          # Nginx configuration for production
 │       ├── Dockerfile          # Docker configuration for frontend
@@ -95,25 +96,29 @@ Smart-Environmental-Monitoring/
 
 ### Python Dependencies (Backend)
 All Python dependencies are managed in `serving/requirements.txt`:
-- fastapi, uvicorn - Web framework
-- pandas, numpy, scipy - Data processing
+- fastapi, uvicorn[standard] - Web framework and ASGI server
+- pandas, numpy, scipy - Data processing and analysis
 - pyarrow - Parquet file handling
-- apscheduler - Task scheduling
-- python-dotenv - Environment management
-- pydantic - Data validation
-- requests - API calls
+- apscheduler - Task scheduling for ETL automation
+- python-dotenv - Environment variable management
+- pydantic - Data validation and serialization
+- requests - HTTP client for API calls
 
 ### Node.js Dependencies (Frontend)
 All Node.js dependencies are managed in `frontend/client/package.json`:
-- react, react-dom - UI framework
-- react-router-dom - Routing
-- axios - API calls
-- recharts - Charts
-- tailwindcss - Styling
-- lucide-react - Icons
-- framer-motion - Animations
-- react-leaflet - Maps
-- react-hot-toast - Notifications
+- react (19.1.1), react-dom - Core UI framework
+- react-router-dom (7.9.5) - Client-side routing
+- axios (1.13.1) - HTTP client for API communication
+- recharts (3.3.0) - Data visualization charts
+- tailwindcss (3.4.0) - Utility-first CSS framework
+- postcss, autoprefixer - CSS processing
+- lucide-react (0.552.0) - Icon library
+- framer-motion (12.23.24) - Animation library
+- react-leaflet (5.0.0), leaflet (1.9.4) - Interactive maps
+- react-hot-toast (2.6.0) - Toast notifications
+- @headlessui/react (2.2.9) - Unstyled UI components
+- vite (7.1.7) - Build tool and dev server
+- @vitejs/plugin-react - React support for Vite
 
 ## Environment Variables
 Required in `.env` file (root directory):
