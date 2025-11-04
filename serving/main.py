@@ -17,9 +17,6 @@ from scipy.stats import iqr
 load_dotenv()
 
 # Import our validation models
-# Assuming validation.py is in the parent directory
-import sys
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 from validation import WeatherAPIResponse, AQICNResponse, CombinedIngestionModel
 
 # --- Configuration ---
@@ -222,6 +219,11 @@ def etl_job():
     print("--- ETL Job Finished ---")
 
 # --- API Endpoints ---
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint for Docker and monitoring."""
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
 @app.get("/api/data")
 def get_data():
     """Reads and returns the curated environmental data."""

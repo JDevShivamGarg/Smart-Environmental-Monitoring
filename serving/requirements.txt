@@ -4,3 +4,7 @@ pandas
 pyarrow
 apscheduler
 scipy
+python-dotenv
+pydantic
+requests
+numpy

@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.venv
+venv/
+ENV/
+env/
+*.egg-info
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+.npm
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.md
+!README.md
+.env.example
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Data (will be mounted as volume)
+data/raw/*
+data/curated/*
+
+# Build artifacts
+dist/
+build/
+*.log

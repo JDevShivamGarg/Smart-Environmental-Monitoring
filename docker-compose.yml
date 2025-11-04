@@ -2,15 +2,53 @@ version: '3.8'
 
 services:
   backend:
-    build: ./serving
+    build:
+      context: ./serving
+      dockerfile: Dockerfile
+    container_name: enviramonitor-backend
     ports:
       - "8000:8000"
+    environment:
+      - WEATHERAPI_API_KEY=${WEATHERAPI_API_KEY}
+      - AQICN_API_KEY=${AQICN_API_KEY}
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./data:/app/data
+      - ./.env:/app/.env:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - enviramonitor-network
 
   frontend:
-    build: ./frontend/client
+    build:
+      context: ./frontend/client
+      dockerfile: Dockerfile
+    container_name: enviramonitor-frontend
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://backend:8000
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - enviramonitor-network
+
+networks:
+  enviramonitor-network:
+    driver: bridge
+
+volumes:
+  data:
