@@ -11,17 +11,23 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
+from supabase import create_client, Client
 from scipy.stats import iqr
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Import our validation models
-from validation import WeatherAPIResponse, AQICNResponse, CombinedIngestionModel
+from .data_models import WeatherAPIResponse, AQICNResponse, CombinedIngestionModel
 
 # --- Configuration ---
 WEATHERAPI_API_KEY = os.environ.get("WEATHERAPI_API_KEY")
 AQICN_API_KEY = os.environ.get("AQICN_API_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+# --- Supabase Client ---
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 CITIES = {
     "Amaravati": {"lat": 16.5667, "lon": 80.3667}, # Andhra Pradesh
@@ -61,8 +67,7 @@ CITIES = {
 }
 
 RAW_DATA_PATH = Path("../data/raw")
-CURATED_DATA_PATH = Path("../data/curated")
-PROCESSED_FILES_LOG = CURATED_DATA_PATH / "_processed_files.log"
+RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
 
 # --- FastAPI App ---
 app = FastAPI()
@@ -127,7 +132,6 @@ def normalize_data(city_name: str, raw_weather: dict, raw_aqi: dict) -> dict:
 
 def run_ingestion():
     print(f"Starting ingestion run at {datetime.utcnow()} UTC...")
-    RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
     all_data: List[Dict[str, Any]] = []
     for city, coords in CITIES.items():
         raw_weather = get_weatherapi_data(city, **coords)
@@ -139,83 +143,41 @@ def run_ingestion():
         time.sleep(1)
     if not all_data:
         print("No data collected in this run.")
+        return None
+    
+    return all_data
+
+# --- Transformation and Upload Logic ---
+def transform_and_upload(data: List[Dict[str, Any]]):
+    if not data:
         return
-    run_timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
-    output_filename = f"ingestion_run_{run_timestamp}.json"
-    output_path = RAW_DATA_PATH / output_filename
-    try:
-        with open(output_path, 'w') as f:
-            json.dump(all_data, f, indent=2)
-        print(f"Successfully saved raw data to {output_path}")
-    except IOError as e:
-        print(f"Error writing raw data to file: {e}")
-
-# --- Transformation Logic ---
-def get_new_raw_files() -> List[Path]:
-    if not PROCESSED_FILES_LOG.exists():
-        processed_files = set()
-    else:
-        with open(PROCESSED_FILES_LOG, 'r') as f:
-            processed_files = set(line.strip() for line in f)
-    all_raw_files = set(str(p) for p in RAW_DATA_PATH.glob("*.json"))
-    new_files = [Path(f) for f in (all_raw_files - processed_files)]
-    print(f"Found {len(new_files)} new raw files to process.")
-    return new_files
-
-def update_processed_log(processed_files: List[Path]):
-    with open(PROCESSED_FILES_LOG, 'a') as f:
-        for file_path in processed_files:
-            f.write(f"{str(file_path)}\n")
-
-def transform_data(raw_files: List[Path]) -> pd.DataFrame:
-    if not raw_files:
-        return None
-    df_list = []
-    for file_path in raw_files:
-        try:
-            df_list.append(pd.read_json(file_path))
-        except Exception as e:
-            print(f"Error reading {file_path}: {e}. Skipping.")
-    if not df_list:
-        return None
-    df = pd.concat(df_list, ignore_index=True)
-    df['ingestion_timestamp'] = pd.to_datetime(df['ingestion_timestamp'], utc=True)
+    
+    df = pd.DataFrame(data)
+    df['ingestion_timestamp'] = datetime.now(timezone.utc).isoformat()
     df['api_timestamp'] = pd.to_datetime(df['api_timestamp'], utc=True)
     df = df.drop_duplicates(subset=['city', 'api_timestamp'])
     df = df.sort_values(by=['city', 'api_timestamp'])
-    df['hour_of_day_utc'] = df['api_timestamp'].dt.hour
-    df['day_of_week_utc'] = df['api_timestamp'].dt.dayofweek
-    df = df.set_index('api_timestamp').sort_index()
-    print(f"Transformed {len(df)} total records.")
-    return df
-
-def save_curated_data(df: pd.DataFrame):
-    output_path = CURATED_DATA_PATH / "environmental_data.parquet"
-    CURATED_DATA_PATH.mkdir(parents=True, exist_ok=True)
+    
+    # Convert timestamp columns to ISO 8601 formatted strings
+    df['api_timestamp'] = df['api_timestamp'].apply(lambda x: x.isoformat())
+    
+    # Convert DataFrame to list of dictionaries for upload
+    records_to_upload = df.to_dict(orient="records")
+    
     try:
-        df.to_parquet(output_path, engine='pyarrow', index=True)
-        print(f"Successfully saved curated data to {output_path}")
+        # Supabase upsert
+        response = supabase.table('environmental_data').upsert(records_to_upload, on_conflict='city,api_timestamp').execute()
+        print(f"Successfully uploaded/updated {len(response.data)} records to Supabase.")
     except Exception as e:
-        print(f"Error saving curated data: {e}")
-
-def run_transformation():
-    print(f"Starting transformation run at {datetime.utcnow()} UTC...")
-    new_files = get_new_raw_files()
-    if not new_files:
-        return
-    df_transformed = transform_data(new_files)
-    if df_transformed is not None and not df_transformed.empty:
-        save_curated_data(df_transformed)
-        update_processed_log(new_files)
-    else:
-        print("No data was transformed in this run.")
+        print(f"Error uploading data to Supabase: {e}")
 
 # --- ETL Job ---
 def etl_job():
     """Runs the full ETL job."""
     print("--- Running ETL Job ---")
-    run_ingestion()
-    run_transformation()
+    ingested_data = run_ingestion()
+    if ingested_data:
+        transform_and_upload(ingested_data)
     print("--- ETL Job Finished ---")
 
 # --- API Endpoints ---
@@ -226,20 +188,23 @@ def health_check():
 
 @app.get("/api/data")
 def get_data():
-    """Reads and returns the curated environmental data."""
+    """Reads and returns the curated environmental data from Supabase."""
     try:
-        df = pd.read_parquet(CURATED_DATA_PATH / "environmental_data.parquet")
-        # Since the index is a datetime object, we need to reset it to be able to serialize to JSON
-        df = df.reset_index()
-        return df.to_dict(orient="records")
-    except FileNotFoundError:
-        return {"error": "Curated data file not found. ETL job may not have run yet."}
+        response = supabase.table('environmental_data').select("*").order('api_timestamp', desc=True).limit(1000).execute()
+        return response.data
+    except Exception as e:
+        return {"error": f"Error fetching data from Supabase: {e}"}
 
 @app.get("/api/stats")
 def get_stats():
-    """Calculates and returns descriptive statistics and correlation matrix."""
+    """Calculates and returns descriptive statistics and correlation matrix from Supabase data."""
     try:
-        df = pd.read_parquet(CURATED_DATA_PATH / "environmental_data.parquet")
+        response = supabase.table('environmental_data').select("*").execute()
+        df = pd.DataFrame(response.data)
+        
+        if df.empty:
+            return {"error": "No data found in Supabase table."}
+
         numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
         
         stats = {
@@ -248,8 +213,8 @@ def get_stats():
         }
         
         return stats
-    except FileNotFoundError:
-        return {"error": "Curated data file not found. ETL job may not have run yet."}
+    except Exception as e:
+        return {"error": f"Error fetching or processing stats from Supabase: {e}"}
 
 # --- Scheduler ---
 scheduler = BackgroundScheduler()
