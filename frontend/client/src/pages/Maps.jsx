@@ -45,19 +45,13 @@ const Maps = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/data');
+        // Use latest_only=true to get only the most recent entry per city
+        const response = await axios.get('http://localhost:8000/api/data?latest_only=true');
         const responseData = response.data.data || response.data;
         const dataArray = Array.isArray(responseData) ? responseData : [];
 
-        // Get latest entry per city
-        const latestByCity = dataArray.reduce((acc, item) => {
-          if (!acc[item.city] || new Date(item.ingestion_timestamp) > new Date(acc[item.city].ingestion_timestamp)) {
-            acc[item.city] = item;
-          }
-          return acc;
-        }, {});
-
-        const enrichedData = Object.values(latestByCity).map(item => ({
+        // Data already filtered by backend, just enrich with coordinates and normalize
+        const enrichedData = dataArray.map(item => ({
           ...item,
           // Use lat/lon from data if available, otherwise use city coordinates
           coordinates: item.lat && item.lon ? [item.lat, item.lon] : (cityCoordinates[item.city] || [20.5937, 78.9629]),

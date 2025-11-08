@@ -12,15 +12,15 @@ const Statistics = () => {
     const fetchStats = async () => {
       // Check cache first
       const cachedStats = getCachedData('stats_data');
-      if (cachedStats) {
-        console.log('Using cached stats');
+      if (cachedStats && cachedStats.descriptive_stats) {
         setStats(cachedStats);
         setLoading(false);
         toast.success('Statistics loaded from cache');
         return;
       }
 
-      // Fetch from API
+      // Fetch from API if no valid cache
+      setLoading(true);
       try {
         const response = await axios.get('http://localhost:8000/api/stats');
         setStats(response.data);
@@ -28,6 +28,7 @@ const Statistics = () => {
         setLoading(false);
         toast.success('Statistics loaded');
       } catch (err) {
+        console.error('Stats fetch error:', err);
         setError(err.message);
         setLoading(false);
         toast.error('Failed to load statistics');

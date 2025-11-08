@@ -39,13 +39,19 @@ const Home = () => {
         data = cachedData.data || cachedData;
       } else {
         try {
-          const response = await axios.get('http://localhost:8000/api/data');
+          // Use latest_only=true to get current snapshot
+          const response = await axios.get('http://localhost:8000/api/data?latest_only=true');
           data = response.data.data || response.data;
           setCachedData('home_data', data);
         } catch (error) {
           console.error('Error fetching stats:', error);
           return;
         }
+      }
+
+      // Ensure data is array and has items
+      if (!Array.isArray(data) || data.length === 0) {
+        return;
       }
 
       const avgAqi = Math.round(
@@ -77,28 +83,28 @@ const Home = () => {
     {
       icon: <Activity className="w-12 h-12 text-blue-500" />,
       title: 'Real-time Monitoring',
-      description: 'Live environmental data updated every 5 minutes from trusted sources',
+      description: 'Live environmental data updated daily at 12 PM from trusted sources across 31+ cities',
       link: '/dashboard',
       color: 'from-blue-500 to-blue-600'
     },
     {
       icon: <Map className="w-12 h-12 text-green-500" />,
       title: 'Interactive Maps',
-      description: 'Visualize environmental conditions across Indian cities',
+      description: 'Visualize AQI, temperature, humidity & wind speed with color-coded markers across India',
       link: '/maps',
       color: 'from-green-500 to-green-600'
     },
     {
       icon: <AlertTriangle className="w-12 h-12 text-red-500" />,
       title: 'Smart Alerts',
-      description: 'Get notified about hazardous environmental conditions',
+      description: 'Customizable threshold-based alerts with critical, warning & info notifications',
       link: '/alerts',
       color: 'from-red-500 to-red-600'
     },
     {
       icon: <BarChart3 className="w-12 h-12 text-purple-500" />,
       title: 'Advanced Analytics',
-      description: 'Comprehensive statistics and trend analysis',
+      description: 'Descriptive statistics, correlation analysis & trend visualization with interactive charts',
       link: '/statistics',
       color: 'from-purple-500 to-purple-600'
     }
@@ -178,7 +184,7 @@ const Home = () => {
             transition={{ delay: 0.2 }}
             className="text-5xl md:text-7xl font-bold mb-6"
           >
-            Welcome to <span className="text-yellow-300">EnviraMonitor</span>
+            Welcome to <span className="text-yellow-300">AirLens</span>
           </motion.h1>
 
           <motion.p
@@ -380,7 +386,7 @@ const Home = () => {
               Stay Informed, Stay Protected
             </h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto">
-              Join thousands of users who rely on EnviraMonitor for accurate, real-time environmental data
+              Monitor air quality, weather conditions & environmental health across 31 Indian cities with intelligent caching & daily updates
             </p>
             <Link
               to="/dashboard"

@@ -5,7 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Statistics from './pages/Statistics';
 import Maps from './pages/Maps';
 import Alerts from './pages/Alerts';
-import Settings from './pages/Settings';
+// import Settings from './pages/Settings'; // Disabled for now - code preserved
 import About from './pages/About';
 
 function App() {
@@ -18,7 +18,7 @@ function App() {
         <Route path="/statistics" element={<Statistics />} />
         <Route path="/maps" element={<Maps />} />
         <Route path="/alerts" element={<Alerts />} />
-        <Route path="/settings" element={<Settings />} />
+        {/* <Route path="/settings" element={<Settings />} /> */} {/* Disabled for now */}
         <Route path="/about" element={<About />} />
       </Routes>
     </Router>

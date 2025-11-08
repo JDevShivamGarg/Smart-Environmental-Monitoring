@@ -18,9 +18,8 @@ const Dashboard = () => {
     if (!forceRefresh) {
       const cachedData = getCachedData('dashboard_data');
       if (cachedData) {
-        console.log('Using cached data');
         const dataArray = Array.isArray(cachedData) ? cachedData : (cachedData.data || cachedData);
-        if (Array.isArray(dataArray)) {
+        if (Array.isArray(dataArray) && dataArray.length > 0) {
           setData(dataArray);
           setLoading(false);
           toast.success('Data loaded from cache');
@@ -29,14 +28,14 @@ const Dashboard = () => {
       }
     }
 
-    // Check if we should fetch fresh data based on 12 PM schedule
-    if (!forceRefresh && !shouldFetchFreshData()) {
-      console.log('Waiting for next 12 PM refresh');
+    // Always fetch if no data exists, otherwise check 12 PM schedule
+    const hasData = data.length > 0;
+    if (!forceRefresh && hasData && !shouldFetchFreshData()) {
       setLoading(false);
       return;
     }
 
-    // Fetch from API
+    // Fetch from API - get all historical data (backend will handle filtering)
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:8000/api/data');
@@ -73,7 +72,24 @@ const Dashboard = () => {
 
   const cities = ['All', ...new Set(data.map(item => item.city))];
 
-  const filteredData = data.filter(item => selectedCity === 'All' || item.city === selectedCity);
+  // Get the latest entry for each city
+  const latestDataByCity = Array.from(
+    data.reduce((map, item) => {
+      if (!map.has(item.city) || new Date(item.ingestion_timestamp) > new Date(map.get(item.city).ingestion_timestamp)) {
+        map.set(item.city, item);
+      }
+      return map;
+    }, new Map()).values()
+  );
+
+  // Filter data based on selected city
+  // If "All" is selected: show only latest data per city
+  // If specific city is selected: show ALL historical data for that city
+  const filteredData = selectedCity === 'All'
+    ? latestDataByCity
+    : data.filter(item => item.city === selectedCity).sort((a, b) =>
+        new Date(b.ingestion_timestamp) - new Date(a.ingestion_timestamp)
+      );
 
   const createAcronym = (name) => {
     if (name.includes(' ')) {
@@ -82,15 +98,11 @@ const Dashboard = () => {
     return name;
   };
 
-  // Get the latest entry for each city for the 'All' view
-  const latestDataForAllCities = Array.from(
-    data.reduce((map, item) => {
-      if (!map.has(item.city) || new Date(item.ingestion_timestamp) > new Date(map.get(item.city).ingestion_timestamp)) {
-        map.set(item.city, { ...item, city: createAcronym(item.city) });
-      }
-      return map;
-    }, new Map()).values()
-  );
+  // Create acronym version for chart display (only for "All" view)
+  const latestDataForAllCities = latestDataByCity.map(item => ({
+    ...item,
+    city: createAcronym(item.city)
+  }));
 
   if (loading && data.length === 0) {
     return <div className="text-center p-8">Loading...</div>;

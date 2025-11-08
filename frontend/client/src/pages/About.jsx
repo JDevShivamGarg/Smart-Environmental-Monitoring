@@ -6,30 +6,30 @@ const About = () => {
     {
       icon: <Cloud className="w-8 h-8 text-blue-600" />,
       title: 'Real-time Data',
-      description: 'Live environmental data from multiple trusted sources updated every 5 minutes'
+      description: 'Live environmental data from WeatherAPI & AQICN updated daily at 12 PM across 31 cities'
     },
     {
       icon: <Database className="w-8 h-8 text-green-600" />,
-      title: 'Comprehensive ETL',
-      description: 'Automated data pipeline for extracting, transforming, and loading environmental data'
+      title: 'Supabase Database',
+      description: 'Cloud PostgreSQL database with automated ETL pipeline and intelligent caching (99% API reduction)'
     },
     {
       icon: <TrendingUp className="w-8 h-8 text-purple-600" />,
       title: 'Interactive Analytics',
-      description: 'Advanced visualization and analysis tools for environmental monitoring'
+      description: 'Recharts visualizations with hover effects, descriptive stats & correlation matrix analysis'
     },
     {
       icon: <Shield className="w-8 h-8 text-red-600" />,
-      title: 'Alert System',
-      description: 'Intelligent alerts for hazardous environmental conditions'
+      title: 'Smart Alert System',
+      description: 'Customizable threshold-based alerts (Critical/Warning/Info) with toast notifications'
     }
   ];
 
   const techStack = {
-    frontend: ['React', 'Tailwind CSS', 'Recharts', 'Framer Motion', 'React Router', 'Axios'],
-    backend: ['FastAPI', 'Python', 'Pandas', 'NumPy', 'Uvicorn'],
-    data: ['WeatherAPI.com', 'AQICN', 'Parquet Files'],
-    deployment: ['Docker', 'Docker Compose', 'Nginx']
+    frontend: ['React 19', 'Vite', 'Tailwind CSS', 'Recharts', 'Framer Motion', 'React Router', 'Leaflet Maps', 'React Hot Toast'],
+    backend: ['FastAPI', 'Python 3.11', 'Pandas', 'Pydantic', 'APScheduler', 'SlowAPI', 'Uvicorn'],
+    data: ['WeatherAPI.com', 'AQICN.org', 'Supabase PostgreSQL'],
+    deployment: ['Docker', 'Docker Compose', 'Nginx', 'Multi-stage Builds']
   };
 
   const team = [
@@ -75,7 +75,7 @@ const About = () => {
         >
           <div className="flex items-center space-x-3 mb-6">
             <Info className="w-10 h-10 text-blue-600" />
-            <h1 className="text-4xl font-bold text-gray-800">About Smart Environmental Monitoring</h1>
+            <h1 className="text-4xl font-bold text-gray-800">About AirLens</h1>
           </div>
 
           <p className="text-lg text-gray-600 mb-6">
@@ -87,13 +87,16 @@ const About = () => {
 
           <div className="flex flex-wrap gap-4">
             <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-semibold">
-              Version 2.0
+              Version 3.1
             </span>
             <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full font-semibold">
-              20+ Cities Monitored
+              31 Cities Monitored
             </span>
             <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-semibold">
-              Real-time Updates
+              Daily 12 PM Updates
+            </span>
+            <span className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full font-semibold">
+              99% API Reduction
             </span>
           </div>
         </motion.div>
@@ -160,12 +163,17 @@ const About = () => {
           className="bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-lg shadow-xl p-8 mb-8"
         >
           <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
+          <p className="text-lg leading-relaxed mb-4">
+            To democratize access to environmental data and empower communities across India with the
+            information they need to make healthier choices. We believe that everyone has the right to
+            know about the quality of the air they breathe and the environmental conditions that affect
+            their daily lives.
+          </p>
           <p className="text-lg leading-relaxed">
-            To democratize access to environmental data and empower communities with the information
-            they need to make healthier choices. We believe that everyone has the right to know about
-            the quality of the air they breathe and the environmental conditions that affect their
-            daily lives. Through technology and innovation, we're making this vital information
-            accessible, understandable, and actionable.
+            Through intelligent caching, optimized data pipelines, and modern web technologies, we've
+            built a sustainable monitoring platform that reduces API calls by 99% while providing
+            accurate, accessible, and actionable environmental insights for all 31 states and union
+            territories of India.
           </p>
         </motion.div>
 
@@ -235,16 +243,25 @@ const About = () => {
             <div className="border-l-4 border-blue-600 pl-4">
               <h3 className="font-semibold text-lg text-gray-800 mb-2">WeatherAPI.com</h3>
               <p className="text-gray-600">
-                Provides comprehensive weather data including temperature, humidity, wind speed,
-                and weather conditions for cities across India.
+                Provides comprehensive weather data including temperature (°C), feels-like temperature,
+                humidity (%), wind speed (m/s), wind direction, and atmospheric pressure for cities
+                across India with high accuracy.
               </p>
             </div>
 
             <div className="border-l-4 border-green-600 pl-4">
-              <h3 className="font-semibold text-lg text-gray-800 mb-2">AQICN.org</h3>
+              <h3 className="font-semibold text-lg text-gray-800 mb-2">AQICN.org (WAQI)</h3>
               <p className="text-gray-600">
-                World's leading air quality data platform providing real-time AQI data from
-                monitoring stations worldwide.
+                World's leading air quality data platform providing real-time AQI data and dominant
+                pollutant information (PM2.5, PM10, O3, NO2, SO2, CO) from monitoring stations worldwide.
+              </p>
+            </div>
+
+            <div className="border-l-4 border-purple-600 pl-4">
+              <h3 className="font-semibold text-lg text-gray-800 mb-2">Supabase</h3>
+              <p className="text-gray-600">
+                Open-source Firebase alternative providing PostgreSQL cloud database with real-time
+                subscriptions, authentication, and automatic API generation for scalable data storage.
               </p>
             </div>
           </div>
@@ -295,7 +312,7 @@ const About = () => {
             <span>for a cleaner, healthier environment</span>
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            © 2025 Smart Environmental Monitoring System. All rights reserved.
+            © 2025 AirLens - Smart Environmental Monitoring. All rights reserved.
           </p>
         </motion.div>
       </div>

@@ -25,7 +25,7 @@ const Header = () => {
     { path: '/statistics', label: 'Statistics', icon: <BarChart3 className="w-4 h-4" /> },
     { path: '/maps', label: 'Maps', icon: <Map className="w-4 h-4" /> },
     { path: '/alerts', label: 'Alerts', icon: <Bell className="w-4 h-4" /> },
-    { path: '/settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
+    // { path: '/settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> }, // Disabled for now
     { path: '/about', label: 'About', icon: <Info className="w-4 h-4" /> }
   ];
 
@@ -47,7 +47,7 @@ const Header = () => {
               <Cloud className="w-8 h-8 text-blue-400" />
             </motion.div>
             <span className="bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
-              EnviraMonitor
+              AirLens
             </span>
             <Activity className="w-6 h-6 text-green-400 group-hover:animate-pulse" />
           </Link>

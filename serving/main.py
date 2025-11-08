@@ -199,34 +199,81 @@ def health_check(request: Request):
 
 @app.get("/api/data")
 @limiter.limit("30/minute")
-def get_data(request: Request):
+def get_data(request: Request, city: str = None, latest_only: bool = False):
     """Reads and returns the curated environmental data from Supabase.
+
+    Query Parameters:
+    - city (optional): Filter data by specific city name
+    - latest_only (optional): If True, return only the latest entry per city
+
+    Examples:
+    - /api/data - Returns all data (up to 1000 records)
+    - /api/data?latest_only=true - Returns latest entry for each city
+    - /api/data?city=Chennai - Returns all historical data for Chennai
+    - /api/data?city=Chennai&latest_only=true - Returns latest entry for Chennai only
+
     Rate limited to 30 requests per minute to prevent abuse.
     """
     try:
-        response = supabase.table('environmental_data').select("*").order('api_timestamp', desc=True).limit(1000).execute()
+        # Build query
+        query = supabase.table('environmental_data').select("*")
+
+        # Filter by city if provided
+        if city:
+            query = query.eq('city', city)
+
+        # Order by timestamp (newest first)
+        query = query.order('ingestion_timestamp', desc=True)
+
+        # Limit results
+        query = query.limit(1000)
+
+        response = query.execute()
+        data = response.data
+
+        # If latest_only is True, get only the most recent entry per city
+        if latest_only and data:
+            latest_data = {}
+            for item in data:
+                city_name = item['city']
+                if city_name not in latest_data:
+                    latest_data[city_name] = item
+            data = list(latest_data.values())
 
         # Add cache control headers
         return {
-            "data": response.data,
+            "data": data,
             "cache_control": "public, max-age=3600",  # Cache for 1 hour
-            "last_updated": datetime.now(timezone.utc).isoformat()
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "count": len(data)
         }
     except Exception as e:
         return {"error": f"Error fetching data from Supabase: {e}"}
 
 @app.get("/api/stats")
 @limiter.limit("20/minute")
-def get_stats(request: Request):
+def get_stats(request: Request, latest_only: bool = True):
     """Calculates and returns descriptive statistics and correlation matrix from Supabase data.
+
+    Query Parameters:
+    - latest_only (optional, default=True): Calculate stats using only the latest entry per city
+
+    By default, statistics are calculated using the most recent data for each city to provide
+    a current snapshot of environmental conditions across India.
+
     Rate limited to 20 requests per minute.
     """
     try:
-        response = supabase.table('environmental_data').select("*").execute()
+        # Fetch data ordered by timestamp
+        response = supabase.table('environmental_data').select("*").order('ingestion_timestamp', desc=True).execute()
         df = pd.DataFrame(response.data)
 
         if df.empty:
             return {"error": "No data found in Supabase table."}
+
+        # If latest_only, filter to most recent entry per city
+        if latest_only:
+            df = df.drop_duplicates(subset=['city'], keep='first')
 
         numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
 
@@ -234,7 +281,9 @@ def get_stats(request: Request):
             'descriptive_stats': df[numeric_cols].describe().to_dict(),
             'correlation_matrix': df[numeric_cols].corr().to_dict(),
             'cache_control': "public, max-age=3600",
-            'last_updated': datetime.now(timezone.utc).isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat(),
+            'data_points': len(df),
+            'cities_count': df['city'].nunique() if 'city' in df.columns else 0
         }
 
         return stats

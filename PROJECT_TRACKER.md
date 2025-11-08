@@ -1,12 +1,19 @@
-# Smart Environmental Monitoring - Project Tracker
+# AirLens - Project Tracker
 
 > **Last Updated:** January 8, 2025
 > **Current Version:** 3.1
+> **Project Name:** AirLens (formerly Smart Environmental Monitoring)
 > **Current Phase:** Phase 4 - Performance Optimization & Database Integration (90% Complete)
 
 ---
 
 ## 🔥 Recent Changes (January 8, 2025)
+
+### Rebranding ✅
+- **New Name**: Changed from "EnviraMonitor" to "AirLens"
+- **Updated branding**: Header, Home page, About page, HTML meta tags
+- **Version**: Updated to 3.1.0 across all documentation
+- **Rationale**: Modern, memorable, conveys clarity and precision
 
 ### Maps Page Fixes ✅
 - **Fixed data population**: Implemented latest-per-city logic to show only most recent data

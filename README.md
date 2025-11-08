@@ -1,4 +1,4 @@
-# Smart Environmental Monitoring System
+# AirLens - Smart Environmental Monitoring System
 
 > A real-time environmental monitoring platform tracking air quality, weather, and environmental health across India with automated data ingestion, intelligent caching, and interactive visualization.
 
@@ -28,7 +28,7 @@
 
 ## 🌍 Overview
 
-The **Smart Environmental Monitoring System** is a comprehensive full-stack application that provides real-time environmental data monitoring across 31+ cities in India. The system automatically fetches data from multiple weather and air quality APIs, stores it in a cloud database, and presents it through an intuitive, interactive web interface.
+**AirLens** is a comprehensive full-stack application that provides real-time environmental data monitoring across 31+ cities in India. The system automatically fetches data from multiple weather and air quality APIs, stores it in a cloud database, and presents it through an intuitive, interactive web interface.
 
 ### Key Highlights
 

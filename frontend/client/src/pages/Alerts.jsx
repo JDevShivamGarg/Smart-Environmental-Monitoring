@@ -28,7 +28,8 @@ const Alerts = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/data');
+      // Use latest_only=true to generate alerts based on current conditions
+      const response = await axios.get('http://localhost:8000/api/data?latest_only=true');
       const responseData = response.data.data || response.data;
       const dataArray = Array.isArray(responseData) ? responseData : [];
       setData(dataArray);
