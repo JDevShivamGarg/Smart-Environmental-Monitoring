@@ -1,8 +1,34 @@
 # Smart Environmental Monitoring - Project Tracker
 
 > **Last Updated:** January 8, 2025
-> **Current Version:** 3.0
-> **Current Phase:** Phase 4 - Performance Optimization & Database Integration (In Progress)
+> **Current Version:** 3.1
+> **Current Phase:** Phase 4 - Performance Optimization & Database Integration (90% Complete)
+
+---
+
+## 🔥 Recent Changes (January 8, 2025)
+
+### Maps Page Fixes ✅
+- **Fixed data population**: Implemented latest-per-city logic to show only most recent data
+- **Fixed metric filtering**: Added `key={selectedMetric}` to MapContainer for proper re-rendering
+- **Property normalization**: Mapped backend fields (temperature_celsius → temperature)
+- **Unit conversion**: Wind speed now converts from m/s to km/h (×3.6)
+- **Enhanced tooltips**: Temperature and wind speed display with 1 decimal precision
+
+### Chart Component Improvements ✅
+- **Removed axes**: Cleaner chart appearance without X/Y axis labels
+- **Custom tooltips**: Hover shows city name and metric value
+- **Glow effect**: Interactive hover with drop-shadow filter
+- **Better UX**: White theme maintained, improved readability
+
+### Docker Configuration ✅
+- **Environment variables**: Added SUPABASE_URL and SUPABASE_KEY to docker-compose.yml
+- **Verified Dockerfiles**: Backend and frontend containers production-ready
+- **Health checks**: Both services have proper health monitoring
+
+### Code Cleanup ✅
+- **Removed debug logs**: Cleaned up console.log statements from Maps.jsx
+- **Updated documentation**: PROJECT_TRACKER.md reflects current state (90% complete)
 
 ---
 
@@ -14,10 +40,10 @@
 |--------|-------|
 | **Project Status** | 🟢 Active Development |
 | **Phase** | 4 of 5 |
-| **Completion** | ~75% |
-| **Backend LOC** | ~330 lines |
-| **Frontend LOC** | ~2,950 lines |
-| **Total Components** | 24 files |
+| **Completion** | ~90% |
+| **Backend LOC** | ~260 lines |
+| **Frontend LOC** | ~3,200 lines |
+| **Total Components** | 26 files |
 | **API Endpoints** | 3 |
 | **Cities Monitored** | 31 |
 | **Database** | Supabase PostgreSQL |
@@ -165,13 +191,29 @@ Phase 5: Data Science & ML           📋 Planned (Q1 2025)
   - Real-time hour/minute/second display
   - Integrated with cache utility
 
+- [x] **Frontend Bug Fixes** (January 2025)
+  - Fixed API response format handling across all pages
+  - Maps page data population and filtering fixed
+  - Chart improvements: removed axes, added hover tooltips with glow effects
+  - Property name normalization (temperature_celsius → temperature)
+  - Wind speed unit conversion (m/s → km/h)
+  - Latest-per-city logic for Maps page
+  - MapContainer key prop for proper metric switching
+
+- [x] **Docker Configuration Updates** (January 2025)
+  - Added Supabase environment variables to docker-compose.yml
+  - Verified all Dockerfiles for production readiness
+  - Backend and frontend health checks configured
+
 **Deliverables:**
 - `utils/cache.js` - 138 lines of caching logic
 - Updated API endpoints with rate limiting
 - Supabase database with environmental_data table
-- RATE_LIMITING_AND_CACHING_IMPLEMENTATION.md documentation
+- Fixed Maps.jsx with proper data normalization
+- Updated Chart.jsx with custom tooltips and hover effects
+- Consolidated project documentation (README.md + PROJECT_TRACKER.md)
 
-**Status:** ✅ **75% Completed** (Core features done)
+**Status:** ✅ **90% Completed** (Core features + bug fixes done)
 
 #### 🔄 In Progress
 

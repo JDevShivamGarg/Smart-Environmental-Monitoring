@@ -29,7 +29,9 @@ const Alerts = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get('http://localhost:8000/api/data');
-      setData(response.data);
+      const responseData = response.data.data || response.data;
+      const dataArray = Array.isArray(responseData) ? responseData : [];
+      setData(dataArray);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to fetch environmental data');

@@ -46,10 +46,27 @@ const Maps = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get('http://localhost:8000/api/data');
-        const enrichedData = response.data.map(item => ({
+        const responseData = response.data.data || response.data;
+        const dataArray = Array.isArray(responseData) ? responseData : [];
+
+        // Get latest entry per city
+        const latestByCity = dataArray.reduce((acc, item) => {
+          if (!acc[item.city] || new Date(item.ingestion_timestamp) > new Date(acc[item.city].ingestion_timestamp)) {
+            acc[item.city] = item;
+          }
+          return acc;
+        }, {});
+
+        const enrichedData = Object.values(latestByCity).map(item => ({
           ...item,
-          coordinates: cityCoordinates[item.city] || [20.5937, 78.9629] // Default to India center
+          // Use lat/lon from data if available, otherwise use city coordinates
+          coordinates: item.lat && item.lon ? [item.lat, item.lon] : (cityCoordinates[item.city] || [20.5937, 78.9629]),
+          // Normalize property names for easier access
+          temperature: item.temperature_celsius,
+          humidity: item.humidity_percent,
+          wind_speed: item.wind_speed_ms * 3.6 // Convert m/s to km/h
         }));
+
         setData(enrichedData);
         setLoading(false);
       } catch (error) {
@@ -158,6 +175,7 @@ const Maps = () => {
 
           <div className="relative">
             <MapContainer
+              key={selectedMetric}
               center={[20.5937, 78.9629]}
               zoom={5}
               style={{ height: '600px', width: '100%', borderRadius: '0.5rem' }}
@@ -193,7 +211,7 @@ const Maps = () => {
                           </p>
                           <p className="flex items-center space-x-2">
                             <Thermometer className="w-4 h-4 text-red-500" />
-                            <span>Temp: {location.temperature}°C</span>
+                            <span>Temp: {location.temperature?.toFixed(1)}°C</span>
                           </p>
                           <p className="flex items-center space-x-2">
                             <Droplets className="w-4 h-4 text-blue-500" />
@@ -201,7 +219,7 @@ const Maps = () => {
                           </p>
                           <p className="flex items-center space-x-2">
                             <Wind className="w-4 h-4 text-gray-600" />
-                            <span>Wind: {location.wind_speed} km/h</span>
+                            <span>Wind: {location.wind_speed?.toFixed(1)} km/h</span>
                           </p>
                         </div>
                       </div>

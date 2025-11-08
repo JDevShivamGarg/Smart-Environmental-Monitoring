@@ -11,6 +11,8 @@ services:
     environment:
       - WEATHERAPI_API_KEY=${WEATHERAPI_API_KEY}
       - AQICN_API_KEY=${AQICN_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
       - PYTHONUNBUFFERED=1
     volumes:
       - ./data:/app/data
