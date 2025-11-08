@@ -46,7 +46,7 @@ const Maps = () => {
     const fetchData = async () => {
       try {
         // Use latest_only=true to get only the most recent entry per city
-        const response = await axios.get('http://localhost:8000/api/data?latest_only=true');
+        const response = await axios.get('https://smart-environmental-monitoring-4vyo.onrender.com/api/data?latest_only=true');
         const responseData = response.data.data || response.data;
         const dataArray = Array.isArray(responseData) ? responseData : [];
 

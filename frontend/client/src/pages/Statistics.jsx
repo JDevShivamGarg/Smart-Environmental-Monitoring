@@ -22,7 +22,7 @@ const Statistics = () => {
       // Fetch from API if no valid cache
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:8000/api/stats');
+        const response = await axios.get('https://smart-environmental-monitoring-4vyo.onrender.com/api/stats');
         setStats(response.data);
         setCachedData('stats_data', response.data);
         setLoading(false);

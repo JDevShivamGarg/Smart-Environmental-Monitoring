@@ -40,7 +40,7 @@ const Home = () => {
       } else {
         try {
           // Use latest_only=true to get current snapshot
-          const response = await axios.get('http://localhost:8000/api/data?latest_only=true');
+          const response = await axios.get('https://smart-environmental-monitoring-4vyo.onrender.com/api/data?latest_only=true');
           data = response.data.data || response.data;
           setCachedData('home_data', data);
         } catch (error) {

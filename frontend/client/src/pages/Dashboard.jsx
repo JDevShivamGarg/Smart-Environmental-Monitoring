@@ -38,7 +38,7 @@ const Dashboard = () => {
     // Fetch from API - get all historical data (backend will handle filtering)
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8000/api/data');
+      const response = await axios.get('https://smart-environmental-monitoring-4vyo.onrender.com/api/data');
       const responseData = response.data.data || response.data;
 
       // Ensure we have an array
