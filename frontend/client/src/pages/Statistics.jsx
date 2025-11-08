@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
+import { getCachedData, setCachedData, shouldFetchFreshData, markDataFetched } from '../utils/cache';
 
 const Statistics = () => {
   const [stats, setStats] = useState(null);
@@ -7,15 +9,32 @@ const Statistics = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:8000/api/stats')
-      .then(response => {
+    const fetchStats = async () => {
+      // Check cache first
+      const cachedStats = getCachedData('stats_data');
+      if (cachedStats) {
+        console.log('Using cached stats');
+        setStats(cachedStats);
+        setLoading(false);
+        toast.success('Statistics loaded from cache');
+        return;
+      }
+
+      // Fetch from API
+      try {
+        const response = await axios.get('http://localhost:8000/api/stats');
         setStats(response.data);
+        setCachedData('stats_data', response.data);
         setLoading(false);
-      })
-      .catch(error => {
-        setError(error.message);
+        toast.success('Statistics loaded');
+      } catch (err) {
+        setError(err.message);
         setLoading(false);
-      });
+        toast.error('Failed to load statistics');
+      }
+    };
+
+    fetchStats();
   }, []);
 
   if (loading) {

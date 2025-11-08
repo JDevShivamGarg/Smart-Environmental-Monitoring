@@ -7,18 +7,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 from pydantic import ValidationError
 from typing import List, Dict, Any
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from scipy.stats import iqr
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Import our validation models
-from .data_models import WeatherAPIResponse, AQICNResponse, CombinedIngestionModel
+from data_models import WeatherAPIResponse, AQICNResponse, CombinedIngestionModel
 
 # --- Configuration ---
 WEATHERAPI_API_KEY = os.environ.get("WEATHERAPI_API_KEY")
@@ -69,8 +72,15 @@ CITIES = {
 RAW_DATA_PATH = Path("../data/raw")
 RAW_DATA_PATH.mkdir(parents=True, exist_ok=True)
 
+# --- Rate Limiter Setup ---
+limiter = Limiter(key_func=get_remote_address)
+
 # --- FastAPI App ---
 app = FastAPI()
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -182,43 +192,59 @@ def etl_job():
 
 # --- API Endpoints ---
 @app.get("/api/health")
-def health_check():
+@limiter.limit("100/minute")
+def health_check(request: Request):
     """Health check endpoint for Docker and monitoring."""
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 @app.get("/api/data")
-def get_data():
-    """Reads and returns the curated environmental data from Supabase."""
+@limiter.limit("30/minute")
+def get_data(request: Request):
+    """Reads and returns the curated environmental data from Supabase.
+    Rate limited to 30 requests per minute to prevent abuse.
+    """
     try:
         response = supabase.table('environmental_data').select("*").order('api_timestamp', desc=True).limit(1000).execute()
-        return response.data
+
+        # Add cache control headers
+        return {
+            "data": response.data,
+            "cache_control": "public, max-age=3600",  # Cache for 1 hour
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }
     except Exception as e:
         return {"error": f"Error fetching data from Supabase: {e}"}
 
 @app.get("/api/stats")
-def get_stats():
-    """Calculates and returns descriptive statistics and correlation matrix from Supabase data."""
+@limiter.limit("20/minute")
+def get_stats(request: Request):
+    """Calculates and returns descriptive statistics and correlation matrix from Supabase data.
+    Rate limited to 20 requests per minute.
+    """
     try:
         response = supabase.table('environmental_data').select("*").execute()
         df = pd.DataFrame(response.data)
-        
+
         if df.empty:
             return {"error": "No data found in Supabase table."}
 
         numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
-        
+
         stats = {
             'descriptive_stats': df[numeric_cols].describe().to_dict(),
-            'correlation_matrix': df[numeric_cols].corr().to_dict()
+            'correlation_matrix': df[numeric_cols].corr().to_dict(),
+            'cache_control': "public, max-age=3600",
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
-        
+
         return stats
     except Exception as e:
         return {"error": f"Error fetching or processing stats from Supabase: {e}"}
 
 # --- Scheduler ---
 scheduler = BackgroundScheduler()
-scheduler.add_job(etl_job, 'interval', minutes=10)
+# Schedule ETL job to run daily at 12:00 PM (noon)
+scheduler.add_job(etl_job, 'cron', hour=12, minute=0)
 
 @app.on_event("startup")
 def startup_event():

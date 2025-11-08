@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { getCachedData, setCachedData } from '../utils/cache';
 
 const Home = () => {
   const [liveStats, setLiveStats] = useState({
@@ -30,34 +31,45 @@ const Home = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/api/data');
-        const data = response.data;
+      // Check cache first
+      const cachedData = getCachedData('home_data');
+      let data;
 
-        const avgAqi = Math.round(
-          data.reduce((sum, item) => sum + item.aqi, 0) / data.length
-        );
-
-        // Find city with highest AQI for highlight
-        const highestAqiCity = data.reduce((prev, current) =>
-          prev.aqi > current.aqi ? prev : current
-        );
-
-        setLiveStats({
-          citiesMonitored: data.length,
-          dataPoints: data.length * 5, // 5 metrics per city
-          lastUpdate: new Date().toLocaleTimeString(),
-          averageAqi: avgAqi
-        });
-
-        setHighlightCity(highestAqiCity);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
+      if (cachedData) {
+        data = cachedData.data || cachedData;
+      } else {
+        try {
+          const response = await axios.get('http://localhost:8000/api/data');
+          data = response.data.data || response.data;
+          setCachedData('home_data', data);
+        } catch (error) {
+          console.error('Error fetching stats:', error);
+          return;
+        }
       }
+
+      const avgAqi = Math.round(
+        data.reduce((sum, item) => sum + item.aqi, 0) / data.length
+      );
+
+      // Find city with highest AQI for highlight
+      const highestAqiCity = data.reduce((prev, current) =>
+        prev.aqi > current.aqi ? prev : current
+      );
+
+      setLiveStats({
+        citiesMonitored: data.length,
+        dataPoints: data.length * 5, // 5 metrics per city
+        lastUpdate: new Date().toLocaleTimeString(),
+        averageAqi: avgAqi
+      });
+
+      setHighlightCity(highestAqiCity);
     };
 
     fetchStats();
-    const interval = setInterval(fetchStats, 30000);
+    // Update every hour instead of 30 seconds (data only refreshes at 12 PM)
+    const interval = setInterval(fetchStats, 60 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 

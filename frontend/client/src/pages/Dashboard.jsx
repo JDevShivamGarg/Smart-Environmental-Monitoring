@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import DataTable from '../components/Data-table';
 import Chart from '../components/Chart';
 import Clock from '../components/Clock';
 import SyncTimer from '../components/SyncTimer';
+import { getCachedData, setCachedData, shouldFetchFreshData, markDataFetched } from '../utils/cache';
 
 const Dashboard = () => {
   const [data, setData] = useState([]);
@@ -11,22 +13,60 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [selectedCity, setSelectedCity] = useState('All');
 
-  const fetchData = () => {
+  const fetchData = async (forceRefresh = false) => {
+    // Check cache first if not forcing refresh
+    if (!forceRefresh) {
+      const cachedData = getCachedData('dashboard_data');
+      if (cachedData) {
+        console.log('Using cached data');
+        const dataArray = Array.isArray(cachedData) ? cachedData : (cachedData.data || cachedData);
+        if (Array.isArray(dataArray)) {
+          setData(dataArray);
+          setLoading(false);
+          toast.success('Data loaded from cache');
+          return;
+        }
+      }
+    }
+
+    // Check if we should fetch fresh data based on 12 PM schedule
+    if (!forceRefresh && !shouldFetchFreshData()) {
+      console.log('Waiting for next 12 PM refresh');
+      setLoading(false);
+      return;
+    }
+
+    // Fetch from API
     setLoading(true);
-    axios.get('http://localhost:8000/api/data')
-      .then(response => {
-        setData(response.data);
-        setLoading(false);
-      })
-      .catch(error => {
-        setError(error.message);
-        setLoading(false);
-      });
+    try {
+      const response = await axios.get('http://localhost:8000/api/data');
+      const responseData = response.data.data || response.data;
+
+      // Ensure we have an array
+      const dataArray = Array.isArray(responseData) ? responseData : [];
+
+      setData(dataArray);
+      setCachedData('dashboard_data', dataArray);
+      markDataFetched();
+      setLoading(false);
+      toast.success('Data refreshed successfully');
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError(err.message);
+      setLoading(false);
+      toast.error('Failed to fetch data');
+    }
   };
 
   useEffect(() => {
     fetchData();
-    const intervalId = setInterval(fetchData, 600000); // 10 minutes
+
+    // Check every hour if we need to fetch fresh data
+    const intervalId = setInterval(() => {
+      if (shouldFetchFreshData()) {
+        fetchData(true);
+      }
+    }, 60 * 60 * 1000); // Check every hour
 
     return () => clearInterval(intervalId);
   }, []);
@@ -66,7 +106,7 @@ const Dashboard = () => {
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex items-center space-x-4">
           <Clock />
-          <SyncTimer interval={600000} />
+          <SyncTimer />
         </div>
       </div>
       <div className="mb-4">

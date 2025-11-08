@@ -295,7 +295,7 @@ const About = () => {
             <span>for a cleaner, healthier environment</span>
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            © 2024 Smart Environmental Monitoring System. All rights reserved.
+            © 2025 Smart Environmental Monitoring System. All rights reserved.
           </p>
         </motion.div>
       </div>
