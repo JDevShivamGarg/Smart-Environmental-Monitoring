@@ -234,7 +234,27 @@ Full API docs available at: `http://localhost:8000/docs`
 
 ## 🐳 Deployment
 
-### Docker Production
+### Live Application
+
+**The application is currently deployed and accessible at:**
+
+- **Frontend:** https://jdevshivamgarg.github.io/Smart-Environmental-Monitoring
+- **Backend API:** Deployed on Render
+
+### Recent Deployment Updates
+
+**Latest Commit (cf562e8):** Corrected localhost port in allowed origins
+- Fixed CORS configuration to allow local development on port 5173
+- Updated allowed origins from `localhost:5437` to `localhost:5173`
+
+**Previous Deployment (8694d7a):** Production deployment configuration
+- Added CORS middleware with production URLs
+- Frontend migrated to use Axios for API calls
+- Configured for deployment on Render (backend) and GitHub Pages (frontend)
+
+### Docker Production (Alternative Deployment)
+
+For self-hosting with Docker:
 
 ```bash
 docker-compose build
@@ -244,7 +264,7 @@ docker-compose logs -f
 
 ### Database Setup
 
-Create Supabase table:
+The application uses Supabase PostgreSQL. Create the table with:
 
 ```sql
 CREATE TABLE environmental_data (
