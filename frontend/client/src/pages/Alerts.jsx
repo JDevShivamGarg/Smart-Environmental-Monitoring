@@ -30,7 +30,10 @@ const Alerts = () => {
     try {
       // Use latest_only=true to generate alerts based on current conditions
       const responseData = await apiService.get('data?latest_only=true');
-      const dataArray = Array.isArray(responseData) ? responseData : [];
+      // Backend returns {data: [], count: X, ...}, extract the data array
+      const dataArray = Array.isArray(responseData)
+        ? responseData
+        : (responseData.data || []);
       setData(dataArray);
     } catch (error) {
       console.error('Error fetching data:', error);

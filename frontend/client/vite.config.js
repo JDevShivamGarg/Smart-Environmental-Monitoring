@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [react()],
   base: '/Smart-Environmental-Monitoring/',
   define: {
-    'process.env.VITE_API_URL': JSON.stringify('https://smart-environmental-monitoring-4vyo.onrender.com/api'),
+    'process.env.VITE_API_URL': JSON.stringify('https://smart-environmental-monitoring-4vyo.onrender.com'),
   },
 });

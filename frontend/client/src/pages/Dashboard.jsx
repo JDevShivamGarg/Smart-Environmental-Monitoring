@@ -40,8 +40,10 @@ const Dashboard = () => {
     try {
       const responseData = await apiService.get('data');
 
-      // Ensure we have an array
-      const dataArray = Array.isArray(responseData) ? responseData : [];
+      // Backend returns {data: [], count: X, ...}, extract the data array
+      const dataArray = Array.isArray(responseData)
+        ? responseData
+        : (responseData.data || []);
 
       setData(dataArray);
       setCachedData('dashboard_data', dataArray);

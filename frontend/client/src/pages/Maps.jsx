@@ -47,7 +47,10 @@ const Maps = () => {
       try {
         // Use latest_only=true to get only the most recent entry per city
         const responseData = await apiService.get('data?latest_only=true');
-        const dataArray = Array.isArray(responseData) ? responseData : [];
+        // Backend returns {data: [], count: X, ...}, extract the data array
+        const dataArray = Array.isArray(responseData)
+          ? responseData
+          : (responseData.data || []);
 
         // Data already filtered by backend, just enrich with coordinates and normalize
         const enrichedData = dataArray.map(item => ({
