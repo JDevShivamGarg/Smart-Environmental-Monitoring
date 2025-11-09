@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiService from '../utils/apiService';
 import toast from 'react-hot-toast';
 import { getCachedData, setCachedData, shouldFetchFreshData, markDataFetched } from '../utils/cache';
 
@@ -22,9 +22,9 @@ const Statistics = () => {
       // Fetch from API if no valid cache
       setLoading(true);
       try {
-        const response = await axios.get('https://smart-environmental-monitoring-4vyo.onrender.com/api/stats');
-        setStats(response.data);
-        setCachedData('stats_data', response.data);
+        const response = await apiService.get('stats');
+        setStats(response);
+        setCachedData('stats_data', response);
         setLoading(false);
         toast.success('Statistics loaded');
       } catch (err) {

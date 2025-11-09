@@ -84,11 +84,17 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://jdevshivamgarg.github.io/Smart-Environmental-Monitoring", "http://localhost:5437"],
+    allow_origins=[
+        "https://jdevshivamgarg.github.io/Smart-Environmental-Monitoring",
+        "https://jdevshivamgarg.github.io",
+        "http://localhost:5437/Smart-Environmental-Monitoring",
+        "http://localhost:5437"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # --- Ingestion Logic ---
 def get_weatherapi_data(city: str, lat: float, lon: float) -> dict:

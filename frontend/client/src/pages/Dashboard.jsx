@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiService from '../utils/apiService';
 import toast from 'react-hot-toast';
 import DataTable from '../components/Data-table';
 import Chart from '../components/Chart';
@@ -38,8 +38,7 @@ const Dashboard = () => {
     // Fetch from API - get all historical data (backend will handle filtering)
     setLoading(true);
     try {
-      const response = await axios.get('https://smart-environmental-monitoring-4vyo.onrender.com/api/data');
-      const responseData = response.data.data || response.data;
+      const responseData = await apiService.get('data');
 
       // Ensure we have an array
       const dataArray = Array.isArray(responseData) ? responseData : [];

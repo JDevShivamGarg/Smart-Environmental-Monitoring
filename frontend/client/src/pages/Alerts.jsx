@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Bell, AlertCircle, AlertTriangle, CheckCircle, X, Filter, RefreshCw, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import apiService from '../utils/apiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -29,8 +29,7 @@ const Alerts = () => {
   const fetchData = async () => {
     try {
       // Use latest_only=true to generate alerts based on current conditions
-      const response = await axios.get('https://smart-environmental-monitoring-4vyo.onrender.com/api/data?latest_only=true');
-      const responseData = response.data.data || response.data;
+      const responseData = await apiService.get('data?latest_only=true');
       const dataArray = Array.isArray(responseData) ? responseData : [];
       setData(dataArray);
     } catch (error) {

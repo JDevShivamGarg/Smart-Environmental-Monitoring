@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
 import { MapPin, Thermometer, Wind, Droplets, AlertTriangle } from 'lucide-react';
-import axios from 'axios';
+import apiService from '../utils/apiService';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default markers in React Leaflet
@@ -46,8 +46,7 @@ const Maps = () => {
     const fetchData = async () => {
       try {
         // Use latest_only=true to get only the most recent entry per city
-        const response = await axios.get('https://smart-environmental-monitoring-4vyo.onrender.com/api/data?latest_only=true');
-        const responseData = response.data.data || response.data;
+        const responseData = await apiService.get('data?latest_only=true');
         const dataArray = Array.isArray(responseData) ? responseData : [];
 
         // Data already filtered by backend, just enrich with coordinates and normalize
