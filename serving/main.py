@@ -87,8 +87,8 @@ app.add_middleware(
     allow_origins=[
         "https://jdevshivamgarg.github.io/Smart-Environmental-Monitoring",
         "https://jdevshivamgarg.github.io",
-        "http://localhost:5437/Smart-Environmental-Monitoring",
-        "http://localhost:5437"
+        "http://localhost:5173/Smart-Environmental-Monitoring",
+        "http://localhost:5173"
     ],
     allow_credentials=True,
     allow_methods=["*"],
